@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <body>
     <!-- デバッグ用　始め -->
+<input type="button" value="debug" onclick="modalTest()">
     <script>
         function modalTest(){
             let modalarray = [
