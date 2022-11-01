@@ -3,8 +3,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
+    <h1>DataVisualizer</h1>
     <!-- デバッグ用　始め -->
-<input type="button" value="debug" onclick="modalTest()">
+<!--<input type="button" value="debug" onclick="modalTest()">-->
     <script>
         function modalTest(){
             let modalarray = [
@@ -27,6 +28,8 @@
         }
     </script>
     <!-- デバッグ用　終わり -->
+    <button onclick="{document.getElementById('highchartscontainer').style.display = 'block';document.getElementById('wdr-component').style.display = 'none';document.getElementById('chartbtn').style.display = 'block';document.getElementById('tablebtn').style.display = 'none';}" id="tablebtn">Show charts</button>
+    <button onclick="{document.getElementById('highchartscontainer').style.display = 'none';document.getElementById('wdr-component').style.display = 'block';document.getElementById('tablebtn').style.display = 'block';document.getElementById('chartbtn').style.display = 'none';}" id="chartbtn">Show table</button>
 
     <dialog id="modal-container">
         <form id="modal-form">
