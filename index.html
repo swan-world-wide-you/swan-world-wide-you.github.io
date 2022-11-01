@@ -141,7 +141,7 @@
             dataSource: {
                 filename: "https://cdn.webdatarocks.com/data/data.csv"
             }
-        }
+        },
         slice: {
             rows: [{
                 uniqueName: "Country"
@@ -154,7 +154,7 @@
             measures: [{
                 uniqueName: "Price"
             }]
-        }
+        },
         reportcomplete: function() {
             pivot.off("reportcomplete");
             createChart();
