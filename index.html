@@ -33,13 +33,13 @@
     <script>
         function showPane(id,paneClass){
             const panes = document.getElementsByClassName(paneClass)
-            panes.forEach((pane) => {
-                if(pane.id = id){
-                    pane.style.display = "block";
+            for(let i < 0; i < panes.length; i++){
+                if(panes[i].id == id){
+                    panes[i].style.display = "block";
                 }else{
-                    pane.style.display = "none";
+                    panes[i].style.display = "none";
                 }
-            });
+            }
         }
     </script>
     <dialog id="modal-container">
