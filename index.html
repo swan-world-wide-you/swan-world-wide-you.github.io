@@ -66,6 +66,7 @@
         function isDark(){
         // What is the expected output of Dark Blue (0, 0, 128);
             const color = document.getElementById("input_color").value;
+            console.log(color);
             const r = parseInt(color.substr(1,2),10) / 255;
             const g = parseInt(color.substr(3,2),10) / 255;
             const b = parseInt(color.substr(5,2),10) / 255;
