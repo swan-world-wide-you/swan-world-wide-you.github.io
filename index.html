@@ -1,50 +1,85 @@
 <!DOCTYPE html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="//unpkg.com/brain.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-vis"></script>
 </head>
 <body>
     <h1>DataVisualizer</h1>
-<script>
+    <script>
+        // brain.js はじめ
+        const net = new brain.recurrent.LSTMTimeStep({
+          inputSize: 2,
+          hiddenLayers: [10],
+          outputSize: 2,
+        });
 
-const net = new brain.recurrent.LSTMTimeStep({
-  inputSize: 2,
-  hiddenLayers: [10],
-  outputSize: 2,
-});
+        // Same test as previous, but combined on a single set
+        const trainingData = [
+          [
+            [1, 5],
+            [2, 4],
+            [3, 3],
+            [4, 2],
+            [5, 1],
+          ],
+        ];
 
-// Same test as previous, but combined on a single set
-const trainingData = [
-  [
-    [1, 5],
-    [2, 4],
-    [3, 3],
-    [4, 2],
-    [5, 1],
-  ],
-];
+        net.train(trainingData, { log: true, errorThresh: 0.09 });
 
-net.train(trainingData, { log: true, errorThresh: 0.09 });
+        const closeToFiveAndOne = net.run([
+          [1, 5],
+          [2, 4],
+          [3, 3],
+          [4, 2],
+        ]);
 
-const closeToFiveAndOne = net.run([
-  [1, 5],
-  [2, 4],
-  [3, 3],
-  [4, 2],
-]);
+        console.log(closeToFiveAndOne);
 
-console.log(closeToFiveAndOne);
+        // now we're cookin' with gas!
+        const forecast = net.forecast(
+          [
+            [1, 5],
+            [2, 4],
+          ],
+          3
+        );
 
-// now we're cookin' with gas!
-const forecast = net.forecast(
-  [
-    [1, 5],
-    [2, 4],
-  ],
-  3
-);
+        console.log('next 3 predictions', forecast);
+        // brain.js おわり
+        
+        // tensorflow　はじめ
+        // 線形回帰
+        // Create Training Data
+        const xs = tf.tensor([0, 1, 2, 3, 4]);
+        const ys = xs.mul(1.2).add(5);
 
-console.log('next 3 predictions', forecast);
+        // Define a Linear Regression Model
+        const model = tf.sequential();
+        model.add(tf.layers.dense({units:1, inputShape:[1]}));
+
+        // Specify Loss and Optimizer
+        model.compile({loss:'meanSquaredError', optimizer:'sgd'});
+
+        // Train the Model
+        model.fit(xs, ys, {epochs:500}).then(() => {myFunction()});
+
+        // Use the Model
+        function myFunction() {
+          const xArr = [];
+          const yArr = [];
+          for (let x = 0; x <= 10; x++) {
+            xArr.push(x);
+            let result = model.predict(tf.tensor([Number(x)]));
+            result.data().then(y => {
+              yArr.push(Number(y));
+              if (x == 10) {plot(xArr, yArr)};
+            });
+          }
+        }
+        // tensorflow　おわり
+    
     </script>
 </body>
 </html>
