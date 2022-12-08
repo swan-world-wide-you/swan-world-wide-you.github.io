@@ -1,189 +1,51 @@
 <!DOCTYPE html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="//unpkg.com/brain.js"></script>
 </head>
 <body>
     <h1>DataVisualizer</h1>
-    <!-- デバッグ用　始め -->
-<!--<input type="button" value="debug" onclick="modalTest()">-->
-    <script>
-        function modalTest(){
-            let modalarray = [
-                ["OK","oknobaai(`OKだった！`)"],
-                ["キャンセル","cancelnobaai(`キャンセルすんな！`)"],
-                ["中止したい","abortnobaai(`中止とか・・・`)"]
-            ];
-            openModal("本当によろしいですか？<br>よろしい場合はOKを押してください","最後の確認です","",modalarray);
-        }
-        function oknobaai(str){
-            alert("OKが押されました。渡された引数は"+str+"です。");
-        }
+<script>
+    const brain = require('brain.js');
 
-        function cancelnobaai(str){
-            alert("キャンセルが押されました！渡された引数は"+str+"です。")
-        }
+const net = new brain.recurrent.LSTMTimeStep({
+  inputSize: 2,
+  hiddenLayers: [10],
+  outputSize: 2,
+});
 
-        function abortnobaai(str){
-            alert("中止が押されました！渡された引数は"+str+"です。")
-        }
+// Same test as previous, but combined on a single set
+const trainingData = [
+  [
+    [1, 5],
+    [2, 4],
+    [3, 3],
+    [4, 2],
+    [5, 1],
+  ],
+];
+
+net.train(trainingData, { log: true, errorThresh: 0.09 });
+
+const closeToFiveAndOne = net.run([
+  [1, 5],
+  [2, 4],
+  [3, 3],
+  [4, 2],
+]);
+
+console.log(closeToFiveAndOne);
+
+// now we're cookin' with gas!
+const forecast = net.forecast(
+  [
+    [1, 5],
+    [2, 4],
+  ],
+  3
+);
+
+console.log('next 3 predictions', forecast);
     </script>
-    <!-- デバッグ用　終わり -->
-    <button onclick="{showPane('highchartsContainer','main');showPane('showtablebtn','mainbtn');}" id="showchartbtn" class="mainbtn">Show charts</button>
-    <button onclick="{showPane('wdr-component','main');showPane('showchartbtn','mainbtn');}" id="showtablebtn" class="mainbtn" style="display:none">Show table</button>
-    <script>
-        function showPane(id,paneClass){
-            const panes = document.getElementsByClassName(paneClass)
-            for(let i = 0; i < panes.length; i++){
-                if(panes[i].id == id){
-                    panes[i].style.display = "block";
-                }else{
-                    panes[i].style.display = "none";
-                }
-            }
-        }
-    </script>
-    <dialog id="modal-container">
-        <form id="modal-form">
-        <div id="modal-header" class="modal-head"></div>
-        <div id="modal-prompt" class="modal-body"></div>
-        <div id="modal-buttons"></div>
-        <div id="modal-footer" class="modal-foot"></div>
-        </form>
-    </dialog>
-
-    <style>
-        .buttonClass{
-            height: 40px;
-            width: 150px;
-        }
-        #modal-header{
-            background-color: darkgreen;
-            color: white;
-            padding: 5px;
-            font-size: 20pt;
-            font-weight: bold;
-            align-content: center;
-        }
-        #modal-prompt{
-            font-size:14pt;
-            padding: 15px;
-        }
-        #modal-footer{
-            font-size: 12pt;
-        }
-    </style>
-    
-    <script>
-        // グローバル変数の定義
-        const modalDialog = document.getElementById("modal-container");
-        const modalHeader = document.getElementById("modal-header");
-        const modalPrompt = document.getElementById("modal-prompt");
-        const modalButton = document.getElementById("modal-buttons");
-        const modalFooter = document.getElementById("modal-footer");
-
-        /**
-         * モーダルダイアログを表示します。
-         * @param {string} prompt ダイアログの内容です。
-         * @param {string} header ダイアログのタイトルです。何も指定しない場合、「確認」が表示されます。
-         * @param {string} footer ダイアログのフッターです。
-         * @param {enum} modaltype ダイアログの種類です。表示するボタンを設定します。
-         * @param {array} label_func ボタンラベルと関数名の組です[[label,function],[label,function],...]。
-         * @return {void} void 戻り値なし
-         */
-        function openModal(prompt, header, footer, label_func){
-            // 引数不足時の例外処理
-            if(!header){
-                header = "確認"; // ヘッダが指定されなかったときに表示する項目
-            }
-            if(!footer){
-                footer = ""; // フッタが指定されなかったときに表示する項目
-            }
-            if(!label_func){
-                label_func = [["OK",""]]; // ボタン設定がされなかったときにはOKボタンを表示、押しても何も実行しない
-            }
-
-            // ダイアログにタグを挿入
-            modalHeader.insertAdjacentHTML("beforeend",header);
-            modalFooter.insertAdjacentHTML("beforeend",footer);
-            modalPrompt.insertAdjacentHTML("beforeend",prompt);
-            modalButton.insertAdjacentHTML("beforeend",composeBtnTag(label_func));
-            modalDialog.showModal();
-        }
-
-        /** ボタン部分のタグを生成します。
-         * @param {enum} label_func ボタンセットのパターンを指定します。
-         * @return {string} returnHTML ボタン部分のタグを返します。
-         */
-        function composeBtnTag(label_func){
-            let returnHTML = "";
-            
-            label_func.forEach((array_inside) => {
-                let buttonTag = "<input type='button' class='buttonClass' onclick='{closeDialog();"; // 押下時にダイアログのリセット関数を発火
-                buttonTag += array_inside[1] + "}' value='" + array_inside[0] + "'>";
-                returnHTML += buttonTag;
-            });
-
-            return returnHTML;
-        }
-
-        /** ダイアログを閉じます。
-         * @return {void} void 戻り値なし
-         */
-        function closeDialog(){
-            modalHeader.innerHTML = "";
-            modalPrompt.innerHTML = "";
-            modalButton.innerHTML = "";
-            modalFooter.innerHTML = "";
-            modalDialog.close();
-        }
-
-    </script>
-    <div id="wdr-component" class="main"></div>
-    <link href="https://cdn.webdatarocks.com/latest/webdatarocks.min.css" rel="stylesheet"/>
-    <script src="https://cdn.webdatarocks.com/latest/webdatarocks.toolbar.min.js"></script>
-    <script src="https://cdn.webdatarocks.com/latest/webdatarocks.js"></script>
-    
-    <script src="https://code.highcharts.com/4.2.2/highcharts.js"></script>
-    <script src="https://code.highcharts.com/4.2.2/highcharts-more.js"></script>
-    <script src="https://cdn.webdatarocks.com/latest/webdatarocks.highcharts.js"></script>
-    <div id="highchartsContainer" class="main" style="display:none"></div>
-    <script>
-    var pivot = new WebDataRocks({
-        container: "#wdr-component",
-        toolbar: true,
-        report: {
-            dataSource: {
-                filename: "https://cdn.webdatarocks.com/data/data.csv"
-            }
-        },
-        slice: {
-            rows: [{
-                uniqueName: "Country"
-            }, {
-                uniqueName: "Measures"
-            }],
-            columns: [{
-                uniqueName: "Category"
-            }],
-            measures: [{
-                uniqueName: "Price"
-            }]
-        },
-        reportcomplete: function() {
-            pivot.off("reportcomplete");
-            createChart();
-        }
-    });       
-    function createChart() {
-        pivot.highcharts.getData({
-            type: "pie"
-        }, function(data) {
-            Highcharts.chart('highchartsContainer', data);
-        }, function(data) {
-            Highcharts.chart('highchartsContainer', data);
-        });
-    }
-    </script>
-    
 </body>
 </html>
