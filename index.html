@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="//unpkg.com/brain.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-vis"></script>
+    <script src="https://unpkg.com/brain.js"></script>
 </head>
 <body>
     <h1>DataVisualizer</h1>
+    <input type="color" id="input_color"><button onclick="isDark()">明暗判定</button>
+    <div id="result"></div>
     <script>
         // brain.js はじめ
         const net = new brain.recurrent.LSTMTimeStep({
@@ -49,36 +49,29 @@
         console.log('next 3 predictions', forecast);
         // brain.js おわり
         
-        // tensorflow　はじめ
-        // 線形回帰
-        // Create Training Data
-        const xs = tf.tensor([0, 1, 2, 3, 4]);
-        const ys = xs.mul(1.2).add(5);
+        // Train the Network with 4 input objects
+        net.train([
+        // White RGB(255, 255, 255)
+        {input:[255/255, 255/255, 255/255], output:{light:1}},
+        // Light grey (192,192,192)
+        {input:[192/255, 192/255, 192/255], output:{light:1}},
+        // Darkgrey (64, 64, 64)
+        {input:[65/255, 65/255, 65/255], output:{dark:1}},
+        // Black (0, 0, 0)
+        {input:[0, 0, 0], output:{dark:1}},
+        ]);
 
-        // Define a Linear Regression Model
-        const model = tf.sequential();
-        model.add(tf.layers.dense({units:1, inputShape:[1]}));
+        function isDark(){
+        // What is the expected output of Dark Blue (0, 0, 128);
+            const color = document.getElementById("input-color").value;
+            const r = parseInt(color.substr(1,2),10);
+            const g = parseInt(color.substr(3,2),10);
+            const b = parseInt(color.substr(5,2),10);
+        let result = net.run([r, g, b]);
 
-        // Specify Loss and Optimizer
-        model.compile({loss:'meanSquaredError', optimizer:'sgd'});
-
-        // Train the Model
-        model.fit(xs, ys, {epochs:500}).then(() => {myFunction()});
-
-        // Use the Model
-        function myFunction() {
-          const xArr = [];
-          const yArr = [];
-          for (let x = 0; x <= 10; x++) {
-            xArr.push(x);
-            let result = model.predict(tf.tensor([Number(x)]));
-            result.data().then(y => {
-              yArr.push(Number(y));
-              if (x == 10) {plot(xArr, yArr)};
-            });
-          }
+        // Display the probability of "dark" and "light"
+        document.getElementById("result").innerHTML = "暗い確率" : result["dark"] + " / 明るい確率" + result["light"];
         }
-        // tensorflow　おわり
     
     </script>
 </body>
