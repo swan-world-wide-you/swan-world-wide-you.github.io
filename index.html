@@ -4,9 +4,10 @@
     <script src="https://unpkg.com/brain.js"></script>
 </head>
 <body>
-    <h1>DataVisualizer</h1>
+    <h1>ColorPickAI</h1>
     <input type="color" id="input_color"><button onclick="isDark()">明暗判定</button>
     <div id="result"></div>
+    <div id="judge_result"></div>
     <script>
         // brain.js はじめ
         const net = new brain.recurrent.LSTMTimeStep({
@@ -65,19 +66,25 @@
 
         function isDark(){
         // What is the expected output of Dark Blue (0, 0, 128);
-            const color = document.getElementById("input_color").value;
-            console.log(color);
-            const rHex = parseInt(color.substr(1,2),16);
-            const gHex = parseInt(color.substr(3,2),16);
-            const bHex = parseInt(color.substr(5,2),16);
-            const r = parseInt(rHex,10) / 255;
-            const g = parseInt(gHex,10) / 255;
-            const b = parseInt(bHex,10) / 255;
-            console.log(rHex,gHex,bHex);
+        const color = document.getElementById("input_color").value;
+        console.log(color);
+        const rHex = parseInt(color.substr(1,2),16);
+        const gHex = parseInt(color.substr(3,2),16);
+        const bHex = parseInt(color.substr(5,2),16);
+        const r = parseInt(rHex,10) / 255;
+        const g = parseInt(gHex,10) / 255;
+        const b = parseInt(bHex,10) / 255;
+        console.log(rHex,gHex,bHex);
         let result = net2.run([r, g, b]);
 
         // Display the probability of "dark" and "light"
         document.getElementById("result").innerHTML = "暗い確率:" + Math.round(result["dark"]*100) + "% / 明るい確率" + Math.round(result["light"]*100) + "%";
+            
+        if(result["dark"] > result["light"]){
+            document.getElementById("judge_result").innerHTML = "暗い🌑";
+        }else{
+            document.getElementById("judge_result").innerHTML = "明るい🌞";
+        }
         }
     
     </script>
