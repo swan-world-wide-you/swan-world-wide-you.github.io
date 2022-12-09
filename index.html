@@ -160,13 +160,20 @@
             else{return 0;}});
           segArray.unshift(["度数","トークン","偏差値"]);
 
+          let plotx = [];
+          let ploty = [];
+          for(let i = 1; i < segArray.length;i++){
+            plotx.push(segArray[i][1]);
+            ploty.push(segArray[i][0]);
+          }
+
           let data = [{
-            x: segArray[1],
-            y: segArray[0],
+            x: plotx,
+            y: ploty,
             type: 'bar'
           }];
           let options = {
-            title: 'サンプルチャート'
+            title: '入力された文書の度数'
           };
 
           tablearea.innerHTML = createTableTag(segArray,"table_token",{header:true,class:"table table-striped",headerSortable:true},0,1,2);
