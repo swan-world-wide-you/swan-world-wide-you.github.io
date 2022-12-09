@@ -67,10 +67,13 @@
         // What is the expected output of Dark Blue (0, 0, 128);
             const color = document.getElementById("input_color").value;
             console.log(color);
-            const r = parseInt(color.substr(1,2),10) / 255;
-            const g = parseInt(color.substr(3,2),10) / 255;
-            const b = parseInt(color.substr(5,2),10) / 255;
-            console.log(r,g,b);
+            const rHex = color.substr(1,2);
+            const gHex = color.substr(3,2);
+            const bHex = color.substr(5,2);
+            const r = parseInt(rHex,10) / 255;
+            const g = parseInt(gHex,10) / 255;
+            const b = parseInt(bHex,10) / 255;
+            console.log(rHex,gHex,bHex);
         let result = net2.run([r, g, b]);
 
         // Display the probability of "dark" and "light"
