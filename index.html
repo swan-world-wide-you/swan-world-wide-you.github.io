@@ -294,5 +294,123 @@
         }
     
     </script>
+
+    <!-- Tensorflow Universal Sentence Encoder(トークン：use) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
+    <!-- https://github.com/tensorflow/tfjs-models/tree/master/universal-sentence-encoder -->
+    <!-- bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+    <div class="container">
+        <div class="input-group">
+            <div class="input-group-text">Prompt</div>
+            <input id="input_query" placeholder="Write something in English..." class="form-control">
+            <div class="btn btn-primary" onclick="{answerQA(document.getElementById('input_query').value);document.getElementById('input_query').value = '';}">Submit</div>
+        </div>
+    </div>
+    <div class="container">
+        <div id="chatContainer" class="c-chatContainer">
+            <div class="c-chatHeader"></div>
+            <div class="c-chatBody">
+                <div id="c-chat"></div>
+            </div>
+        </div>
+    </div>
+</body> 
+<script>
+
+    function answerQA(query){
+        // Load the model.
+        use.load({modelUrl:'https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/3'}).then((model) =>{
+            use.loadQnA().then(model => {
+            // Embed a dictionary of a query and responses. The input to the embed method
+            // needs to be in following format:
+            // {
+            //  queries: string[];
+            //  responses: Response[];
+            // }
+            // queries is an array of question strings
+            // responses is an array of following structure:
+            // {
+            //  response: string;
+            //  context?: string;
+            // }
+            // context is optional, it provides the context string of the answer.
+
+            let input = {
+            queries: [query],
+            responses: [
+            'あまり元気ではありません。',
+            '中国の首都は北京です。',
+            '指は５本ですよね。',
+            'はい、<a href=https://www.jma.go.jp/bosai/#area_type=class20s&area_code=1310700&pattern=forecast target=_blank>東京地方の天気予報</a>です。',
+            '申し訳ありません。その点ではお手伝いできません。',
+            '木の横にいるのはジョンです。',
+            'あなたは面白いですね。',
+            'ググってどうぞ。'
+            ]
+            };
+            var scores = [];
+            const embeddings = model.embed(input);
+            /*
+            * The output of the embed method is an object with two keys:
+            * {
+            *  queryEmbedding: tf.Tensor;
+            *  responseEmbedding: tf.Tensor;
+            * }
+            * queryEmbedding is a tensor containing embeddings for all queries.
+            * responseEmbedding is a tensor containing embeddings for all answers.
+            * You can call `arraySync()` to retrieve the values of the tensor.
+            * In this example, embed_query[0] is the embedding for the query
+            * 'How are you feeling today?'
+            * And embed_responses[0] is the embedding for the answer
+            * 'I\'m not feeling very well.'
+            */
+            const embed_query = embeddings['queryEmbedding'].arraySync();
+            const embed_responses = embeddings['responseEmbedding'].arraySync();
+
+            let likelyresponse = "Tensorflow could not compute the likeliness.";
+            let likeliness_max = 0;
+            // compute the dotProduct of each query and response pair.
+            for (let i = 0; i < input['queries'].length; i++) {
+            for (let j = 0; j < input['responses'].length; j++) {
+                let likeliness_tensor = dotProduct(embed_query[i], embed_responses[j]);
+                scores.push(likeliness_tensor);
+                if(likeliness_max <= likeliness_tensor){
+                    likeliness_max = likeliness_tensor;
+                    likelyresponse = input.responses[j];
+                }
+            }
+            }
+            console.log(likelyresponse,scores);
+            createChat(likelyresponse);
+            })
+        });
+    }
+
+    // Calculate the dot product of two vector arrays.
+    const dotProduct = (xs, ys) => {
+    const sum = xs => xs ? xs.reduce((a, b) => a + b, 0) : undefined;
+
+    return xs.length === ys.length ?
+    sum(zipWith((a, b) => a * b, xs, ys))
+    : undefined;
+    }
+
+    // zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+    const zipWith =
+    (f, xs, ys) => {
+    const ny = ys.length;
+    return (xs.length <= ny ? xs : xs.slice(0, ny))
+        .map((x, i) => f(x, ys[i]));
+    }
+
+    // チャット生成
+    function createChat(msg){
+        document.getElementById("c-chat").innerHTML += msg + "<br>";
+    }
+</script>
 </body>
 </html>
