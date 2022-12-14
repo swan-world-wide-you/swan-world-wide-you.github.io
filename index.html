@@ -300,93 +300,190 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
     <!-- https://github.com/tensorflow/tfjs-models/tree/master/universal-sentence-encoder -->
     <!-- bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
 
     <div class="container">
-        <div class="input-group">
-            <div class="input-group-text">Prompt</div>
-            <input id="input_query" placeholder="Write something in English..." class="form-control">
-            <div class="btn btn-primary" onclick="{answerQA(document.getElementById('input_query').value);document.getElementById('input_query').value = '';}">Submit</div>
-        </div>
+        <h1>Tensorflow NLP</h1>
     </div>
-    <div class="container">
+    <div class="mb-4">
         <div id="chatContainer" class="c-chatContainer">
-            <div class="c-chatHeader"></div>
+            <div class="c-chatHeader"><i class="bi bi-robot"></i>Consierge</div>
             <div class="c-chatBody">
                 <div id="c-chat"></div>
+                <div id="spinner-chat" class="mb-4" style="display:none;">
+                    <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <i class="bi bi-robot"></i>
+                    <strong>Please wait until Tensorflow gets ready to respond...</strong>
+                </div>    
+            </div>
+            <div class="mb-4 c-chatForm">
+                <div class="input-group">
+                    <div class="input-group-text"><i class="bi bi-pencil-fill"></i></div>
+                    <input id="input_query" placeholder="Write something in English..." class="form-control">
+                    <div class="btn btn-primary" onclick="{answerQA(document.getElementById('input_query').value);createChat('user',document.getElementById('input_query').value);}"><i class="bi bi-send"></i></div>
+                </div>
             </div>
         </div>
-    </div>
-</body> 
+    </div> 
+
+<style>
+
+.c-chatContainer{
+        height: 100%;
+        width: 100%;
+        top:0;
+        left:0;
+        position:fixed;
+    }
+    .c-chatHeader{
+        height: 50px;
+        width: 100%;
+        top:0;
+        left:0;
+        position: relative;
+        background-color: grey;
+        color: white;
+        text-shadow: 3px;
+        text-align: center;
+    }
+    .c-chatBody{
+        position:absolute; width: 100vw; height: calc(80vh - 50px);left: 0px; top: 50px; background-color:lightskyblue; overflow-y:scroll;
+    }
+    .c-chatForm{
+        position:absolute; width: 100vw; height:20vh;left: 0px; top:80vh; background-color:lightgrey;
+    }
+    .chat-conversation-wrapper{
+        display: block;
+        width: 100%;
+    }
+    .left{
+        text-align: left;
+    }
+    .right{
+        text-align: right;
+    }
+    .chat-left{
+        background-color: #D7E5F0;
+        color: black;
+        display: block;
+        margin-left: 20px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        border-radius: 0 9px 9px 9px;
+        justify-items: left;
+        width: fit-content;
+    }
+    .chat-right{
+        background-color: darkblue;
+        color: white;
+        display: block;
+        margin-right: 20px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        justify-items: right;
+        border-radius: 9px 9px 0 9px;
+        width:fit-content;
+    }
+    .c-chatContents{
+    padding: 8px;
+    position: relative;
+    display: inline-block;
+    word-wrap: break-word;
+    box-sizing: border-box;
+    max-width: 60%;
+    }
+    body {
+      min-width: 300px;
+      min-height: 300px;
+    }
+</style>
+
 <script>
-
     function answerQA(query){
+        const spinner = document.getElementById("spinner-chat");
+        spinner.style.display = "block";
+        document.getElementById("input_query").disabled = true;
         // Load the model.
-        use.load({modelUrl:'https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/3'}).then((model) =>{
-            use.loadQnA().then(model => {
-            // Embed a dictionary of a query and responses. The input to the embed method
-            // needs to be in following format:
-            // {
-            //  queries: string[];
-            //  responses: Response[];
-            // }
-            // queries is an array of question strings
-            // responses is an array of following structure:
-            // {
-            //  response: string;
-            //  context?: string;
-            // }
-            // context is optional, it provides the context string of the answer.
+        use.loadQnA().then(model => {
+        // Embed a dictionary of a query and responses. The input to the embed method
+        // needs to be in following format:
+        // {
+        //  queries: string[];
+        //  responses: Response[];
+        // }
+        // queries is an array of question strings
+        // responses is an array of following structure:
+        // {
+        //  response: string;
+        //  context?: string;
+        // }
+        // context is optional, it provides the context string of the answer.
 
-            let input = {
-            queries: [query],
-            responses: [
-            'あまり元気ではありません。',
-            '中国の首都は北京です。',
-            '指は５本ですよね。',
-            'はい、<a href=https://www.jma.go.jp/bosai/#area_type=class20s&area_code=1310700&pattern=forecast target=_blank>東京地方の天気予報</a>です。',
-            '申し訳ありません。その点ではお手伝いできません。',
-            '木の横にいるのはジョンです。',
-            'あなたは面白いですね。',
-            'ググってどうぞ。'
-            ]
-            };
-            var scores = [];
-            const embeddings = model.embed(input);
-            /*
-            * The output of the embed method is an object with two keys:
-            * {
-            *  queryEmbedding: tf.Tensor;
-            *  responseEmbedding: tf.Tensor;
-            * }
-            * queryEmbedding is a tensor containing embeddings for all queries.
-            * responseEmbedding is a tensor containing embeddings for all answers.
-            * You can call `arraySync()` to retrieve the values of the tensor.
-            * In this example, embed_query[0] is the embedding for the query
-            * 'How are you feeling today?'
-            * And embed_responses[0] is the embedding for the answer
-            * 'I\'m not feeling very well.'
-            */
-            const embed_query = embeddings['queryEmbedding'].arraySync();
-            const embed_responses = embeddings['responseEmbedding'].arraySync();
+        let input = {
+        queries: [query],
+        responses: [
+            'I\'m very fine today.',
+            'Please check <a href=https://ja.wikipedia.org/wiki/>Wikipedia</a>.',
+            'You have five fingers on your hand.',
+            'Here, <a href=https://www.jma.go.jp/bosai/#area_type=class20s&area_code=1310700&pattern=forecast target=_blank>weather forecast for Tokyo</a>.',
+            'Sorry, I might not be able to help you with that.',
+            'Please check out on <a href=https://www.google.co.jp/maps/>Google Maps</a>.',
+            'You are quite entertainer.',
+            'Here, <a href=https://rsguitar.rakurakuseisan.jp/nGNrtMlFZKa/>Rakuraku-seisan</a> cost adjastment system.',
+            'Here, check your itinerary on <a href=https://transit.yahoo.co.jp/>Yahoo Transit</a>.',
+            'Here, <a href=http://202.19.112.190/dezie/ag.exe?page=DBView&did=17955>list of incidents</a>.',
+            'Here, <a href=https://www.ufsplus.kwe.com/>UFS+ freight forwarding system</a>.',
+            'Here, <a href=http://urs.jp.kwe.com/kong/login.jsp>KONG reporting system</a>.',
+            'You are welcome.',
+            'That is not nice to say.',
+        ]
+        };
+        var scores = [];
+        const embeddings = model.embed(input);
+        /*
+        * The output of the embed method is an object with two keys:
+        * {
+        *  queryEmbedding: tf.Tensor;
+        *  responseEmbedding: tf.Tensor;
+        * }
+        * queryEmbedding is a tensor containing embeddings for all queries.
+        * responseEmbedding is a tensor containing embeddings for all answers.
+        * You can call `arraySync()` to retrieve the values of the tensor.
+        * In this example, embed_query[0] is the embedding for the query
+        * 'How are you feeling today?'
+        * And embed_responses[0] is the embedding for the answer
+        * 'I\'m not feeling very well.'
+        */
+        const embed_query = embeddings['queryEmbedding'].arraySync();
+        const embed_responses = embeddings['responseEmbedding'].arraySync();
 
-            let likelyresponse = "Tensorflow could not compute the likeliness.";
-            let likeliness_max = 0;
-            // compute the dotProduct of each query and response pair.
-            for (let i = 0; i < input['queries'].length; i++) {
-            for (let j = 0; j < input['responses'].length; j++) {
-                let likeliness_tensor = dotProduct(embed_query[i], embed_responses[j]);
-                scores.push(likeliness_tensor);
-                if(likeliness_max <= likeliness_tensor){
-                    likeliness_max = likeliness_tensor;
-                    likelyresponse = input.responses[j];
-                }
+        let likelyresponse = "Tensorflow could not compute the likeliness.";
+        let likeliness_max = 0;
+        let likelyresponse_sub = [];
+        // compute the dotProduct of each query and response pair.
+        for (let i = 0; i < input['queries'].length; i++) {
+        for (let j = 0; j < input['responses'].length; j++) {
+            let likeliness_tensor = dotProduct(embed_query[i], embed_responses[j]);
+            scores.push(likeliness_tensor);
+            if(likeliness_max <= likeliness_tensor){
+                likeliness_max = likeliness_tensor;
+                likelyresponse = input.responses[j];
             }
+        }
+        }
+
+        // もしかして
+        for(let i = 0; i < scores.length; i++){
+            if(likeliness_max*0.9 < scores[i]){// 類似度9割超え
+                likelyresponse_sub.push(input.responses[i]);
             }
-            console.log(likelyresponse,scores);
-            createChat(likelyresponse);
-            })
+        }
+        console.log(likelyresponse,scores);
+        spinner.style.display = "none";
+        document.getElementById("input_query").disabled = false;
+        createChat("tf",likelyresponse,likelyresponse_sub);
         });
     }
 
@@ -408,9 +505,30 @@
     }
 
     // チャット生成
-    function createChat(msg){
-        document.getElementById("c-chat").innerHTML += msg + "<br>";
+    function createChat(user,msg,msgsub){
+        const parentdiv = document.createElement("div");
+        parentdiv.classList.add("chat-conversation-wrapper");
+
+        const div = document.createElement("div");
+        div.classList.add("c-chatContents");
+        if(user=="tf"){
+            parentdiv.classList.add("left");
+            div.classList.add("chat-left");
+        }else{
+            parentdiv.classList.add("right");
+            div.classList.add("chat-right");
+        }
+        div.innerHTML = msg;
+        parentdiv.appendChild(div);
+
+        document.getElementById("c-chat").appendChild(parentdiv);
+        if(msgsub.length > 1){
+            for(let i = 1; i < msgsub.length; i++){
+                createChat("tf","You might have meant: " + msgsub[i] + "<br>","");
+            }
+        }
+        parentdiv.scrollIntoView();
+        document.getElementById('input_query').value = '';
     }
+
 </script>
-</body>
-</html>
