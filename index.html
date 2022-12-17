@@ -237,7 +237,7 @@
 <script>
     let modelEN;
     let modelJA;
-	
+
     function modelFetch(lang){
 	    const request = new XMLHttpRequest();
 	    request.open("GET","model"+lang+".json");
@@ -250,6 +250,7 @@
 	    if(lang == "ja"){
 		    modelJA = result;
 	    }
+	    isOnline();
     }
 
     const statusmsg = ["<i class='bi bi-wifi-off'></i>","<i class='bi bi-cloud-arrow-down'></i>"];
@@ -290,6 +291,10 @@
             return;
         }
         createChat('user',document.getElementById('input_query').value);
+	    
+	// GITHUBレポジトリからモデルを読み込み
+	modelFetch("en");
+	    
         // Load the model.
         use.loadQnA().then(model => {
         // Embed a dictionary of a query and responses. The input to the embed method
