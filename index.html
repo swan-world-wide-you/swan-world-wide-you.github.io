@@ -237,6 +237,20 @@
 <script>
     let modelEN;
     let modelJA;
+	
+    function modelFetch(lang){
+	    const request = new XmlHttpRequest();
+	    request.open("GET","model"+lang+".json");
+	    request.send();
+	    
+	    const result = request.responseText;
+	    if(lang == "en"){
+		    modelEN = result;
+	    }
+	    if(lang == "ja"){
+		    modelJA = result;
+	    }
+    }
 
     const statusmsg = ["<i class='bi bi-wifi-off'></i>","<i class='bi bi-cloud-arrow-down'></i>"];
     function isOnline(){
