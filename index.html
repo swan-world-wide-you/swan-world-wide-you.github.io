@@ -335,7 +335,7 @@
             createChat('user', document.getElementById('input_query').value);
 
             // GITHUBレポジトリからモデルを読み込み
-            modelFetch("en").then({
+            modelFetch("en").then((use) => {
 
                 // Load the model.
                 use.loadQnA().then(model => {
