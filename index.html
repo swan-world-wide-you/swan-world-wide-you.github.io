@@ -240,7 +240,7 @@
 
     function modelFetch(lang){
 	    const request = new XMLHttpRequest();
-	    request.open("GET","model"+lang+".json");
+	    request.open("GET","https://swan-world-wide-you.github.io/model"+lang+".json");
 	    request.send();
 	    
 	    const result = request.responseText;
