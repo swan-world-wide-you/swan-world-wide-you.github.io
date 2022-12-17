@@ -1,0 +1,25 @@
+{
+  queries: [
+    'How are you?',
+    'What does it mean?',
+    'Will it rain today?',
+    'Call 911.',
+    'I want to check out the map.',
+    'Say some joke if you can.',
+    'How can I get to the station by bus?',
+    'Thanks a lot.',
+    'Shit.'
+  ],
+  responses: [
+      'I\'m very fine today.',
+      'Please check <a href=https://ja.wikipedia.org/wiki/>Wikipedia</a>.',
+      'Here, <a href=https://www.jma.go.jp/bosai/#area_type=class20s&area_code=1310700&pattern=forecast target=_blank>weather forecast for Tokyo</a>.',
+      'Sorry, I might not be able to help you with that.',
+      'Please check out on <a href=https://www.google.co.jp/maps/>Google Maps</a>.',
+      'You are quite entertainer.',
+      'Here, <a href=https://rsguitar.rakurakuseisan.jp/nGNrtMlFZKa/>Rakuraku-seisan</a> cost adjastment system.',
+      'Here, check your itinerary on <a href=https://transit.yahoo.co.jp/>Yahoo Transit</a>.',
+      'You are welcome.',
+      'That is not nice to say.',
+  ]
+};
