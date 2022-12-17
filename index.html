@@ -293,75 +293,76 @@
         createChat('user',document.getElementById('input_query').value);
 	    
 	// GITHUBレポジトリからモデルを読み込み
-	modelFetch("en");
-	    
-        // Load the model.
-        use.loadQnA().then(model => {
-        // Embed a dictionary of a query and responses. The input to the embed method
-        // needs to be in following format:
-        // {
-        //  queries: string[];
-        //  responses: Response[];
-        // }
-        // queries is an array of question strings
-        // responses is an array of following structure:
-        // {
-        //  response: string;
-        //  context?: string;
-        // }
-        // context is optional, it provides the context string of the answer.
-		
-	modelEN.queries.push(query);
+	modelFetch("en").then(() => {
 
-	/*
-        modelEN = {
-        queries: [query],
-        responses: [
-            'I\'m very fine today.',
-            'Please check <a href=https://ja.wikipedia.org/wiki/>Wikipedia</a>.',
-            'You have five fingers on your hand.',
-            'Here, <a href=https://www.jma.go.jp/bosai/#area_type=class20s&area_code=1310700&pattern=forecast target=_blank>weather forecast for Tokyo</a>.',
-            'Sorry, I might not be able to help you with that.',
-            'Please check out on <a href=https://www.google.co.jp/maps/>Google Maps</a>.',
-            'You are quite entertainer.',
-            'Here, <a href=https://rsguitar.rakurakuseisan.jp/nGNrtMlFZKa/>Rakuraku-seisan</a> cost adjastment system.',
-            'Here, check your itinerary on <a href=https://transit.yahoo.co.jp/>Yahoo Transit</a>.',
-            'You are welcome.',
-            'That is not nice to say.',
-        ]
-        };
-	*/
-        isOnline();
-        const embeddings = model.embed(modelEN);
-        /*
-        * The output of the embed method is an object with two keys:
-        * {
-        *  queryEmbedding: tf.Tensor;
-        *  responseEmbedding: tf.Tensor;
-        * }
-        * queryEmbedding is a tensor containing embeddings for all queries.
-        * responseEmbedding is a tensor containing embeddings for all answers.
-        * You can call `arraySync()` to retrieve the values of the tensor.
-        * In this example, embed_query[0] is the embedding for the query
-        * 'How are you feeling today?'
-        * And embed_responses[0] is the embedding for the answer
-        * 'I\'m not feeling very well.'
-        */
-        const embed_query = embeddings['queryEmbedding'].arraySync();
-        const embed_responses = embeddings['responseEmbedding'].arraySync();
+		// Load the model.
+		use.loadQnA().then(model => {
+		// Embed a dictionary of a query and responses. The input to the embed method
+		// needs to be in following format:
+		// {
+		//  queries: string[];
+		//  responses: Response[];
+		// }
+		// queries is an array of question strings
+		// responses is an array of following structure:
+		// {
+		//  response: string;
+		//  context?: string;
+		// }
+		// context is optional, it provides the context string of the answer.
 
-        let likelyresponse = "Tensorflow could not compute the likeliness.";
-        let likeliness_max = 0;
-        let likelyresponse_sub = [];
-        // compute the dotProduct of each query and response pair.
-        for (let i = 0; i < modelEN['queries'].length; i++) {
-        for (let j = 0; j < modelEN['responses'].length; j++) {
-            let likeliness_tensor = dotProduct(embed_query[i], embed_responses[j]);
-            if(likeliness_max <= likeliness_tensor){
-                likeliness_max = likeliness_tensor;
-                likelyresponse = modelEN.responses[j];
-            }
-        }
+		modelEN.queries.push(query);
+
+		/*
+		modelEN = {
+		queries: [query],
+		responses: [
+		    'I\'m very fine today.',
+		    'Please check <a href=https://ja.wikipedia.org/wiki/>Wikipedia</a>.',
+		    'You have five fingers on your hand.',
+		    'Here, <a href=https://www.jma.go.jp/bosai/#area_type=class20s&area_code=1310700&pattern=forecast target=_blank>weather forecast for Tokyo</a>.',
+		    'Sorry, I might not be able to help you with that.',
+		    'Please check out on <a href=https://www.google.co.jp/maps/>Google Maps</a>.',
+		    'You are quite entertainer.',
+		    'Here, <a href=https://rsguitar.rakurakuseisan.jp/nGNrtMlFZKa/>Rakuraku-seisan</a> cost adjastment system.',
+		    'Here, check your itinerary on <a href=https://transit.yahoo.co.jp/>Yahoo Transit</a>.',
+		    'You are welcome.',
+		    'That is not nice to say.',
+		]
+		};
+		*/
+		isOnline();
+		const embeddings = model.embed(modelEN);
+		/*
+		* The output of the embed method is an object with two keys:
+		* {
+		*  queryEmbedding: tf.Tensor;
+		*  responseEmbedding: tf.Tensor;
+		* }
+		* queryEmbedding is a tensor containing embeddings for all queries.
+		* responseEmbedding is a tensor containing embeddings for all answers.
+		* You can call `arraySync()` to retrieve the values of the tensor.
+		* In this example, embed_query[0] is the embedding for the query
+		* 'How are you feeling today?'
+		* And embed_responses[0] is the embedding for the answer
+		* 'I\'m not feeling very well.'
+		*/
+		const embed_query = embeddings['queryEmbedding'].arraySync();
+		const embed_responses = embeddings['responseEmbedding'].arraySync();
+
+		let likelyresponse = "Tensorflow could not compute the likeliness.";
+		let likeliness_max = 0;
+		let likelyresponse_sub = [];
+		// compute the dotProduct of each query and response pair.
+		for (let i = 0; i < modelEN['queries'].length; i++) {
+		for (let j = 0; j < modelEN['responses'].length; j++) {
+		    let likeliness_tensor = dotProduct(embed_query[i], embed_responses[j]);
+		    if(likeliness_max <= likeliness_tensor){
+			likeliness_max = likeliness_tensor;
+			likelyresponse = modelEN.responses[j];
+		    }
+		}
+	});
         }
 
         console.log(likelyresponse);
