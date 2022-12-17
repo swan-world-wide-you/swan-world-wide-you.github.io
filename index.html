@@ -2,7 +2,7 @@
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://unpkg.com/brain.js"></script>
+    <!--<script src="https://unpkg.com/brain.js"></script>-->
     <!-- CSS only -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
@@ -20,6 +20,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
     <!-- https://github.com/tensorflow/tfjs-models/tree/master/universal-sentence-encoder -->
+    <!-- 日本語エンコーダTinySegmenter -->
+    <script src="http://chasen.org/~taku/software/TinySegmenter/tiny_segmenter-0.2.js"></script>
     <!-- bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
 
@@ -280,19 +282,28 @@
         let modelEN;
         let modelJA;
 
+        function onloadFunc(){
+            // GITHUBレポジトリからモデルを読み込み
+            modelFetch("en");
+            modelFetch("ja");
+        }
+        window.onload = onloadFunc;
+
         function modelFetch(lang) {
             const request = new XMLHttpRequest();
+            request.onreadystatechange = () =>{
+                const result = request.response;
+                setsessionStorage(result,"model"+lang);
+                isOnline();
+                if(lang == "en"){
+                    modelEN = JSON.parse(result);
+                }
+                if(lang == "ja"){
+                    modelJA = JSON.parse(result);
+                }
+            }
             request.open("GET", "https://swan-world-wide-you.github.io/model" + lang + ".json");
             request.send();
-
-            const result = request.responseText;
-            if (lang == "en") {
-                modelEN = result;
-            }
-            if (lang == "ja") {
-                modelJA = result;
-            }
-            isOnline();
         }
 
         const statusmsg = ["<i class='bi bi-wifi-off'></i>", "<i class='bi bi-cloud-arrow-down'></i>"];
@@ -325,91 +336,66 @@
             }
             spinner.style.display = "none";
             document.getElementById("input_query").disabled = false;
-
         }
+
         function answerEN(query) {
             if (!query) {
                 createChat("tf", "Say something.");
                 return;
             }
             createChat('user', document.getElementById('input_query').value);
-
-            // GITHUBレポジトリからモデルを読み込み
-            modelFetch("en").then((use) => {
-
+            
                 // Load the model.
-                use.loadQnA().then(model => {
-                    // Embed a dictionary of a query and responses. The input to the embed method
-                    // needs to be in following format:
-                    // {
-                    //  queries: string[];
-                    //  responses: Response[];
-                    // }
-                    // queries is an array of question strings
-                    // responses is an array of following structure:
-                    // {
-                    //  response: string;
-                    //  context?: string;
-                    // }
-                    // context is optional, it provides the context string of the answer.
+            use.loadQnA().then(model => {
+                // Embed a dictionary of a query and responses. The input to the embed method
+                // needs to be in following format:
+                // {
+                //  queries: string[];
+                //  responses: Response[];
+                // }
+                // queries is an array of question strings
+                // responses is an array of following structure:
+                // {
+                //  response: string;
+                //  context?: string;
+                // }
+                // context is optional, it provides the context string of the answer.
 
-                    modelEN.queries.push(query);
+                modelEN.queries=[query];
+                isOnline();
+                const embeddings = model.embed(modelEN);
+                /*
+                * The output of the embed method is an object with two keys:
+                * {
+                *  queryEmbedding: tf.Tensor;
+                *  responseEmbedding: tf.Tensor;
+                * }
+                * queryEmbedding is a tensor containing embeddings for all queries.
+                * responseEmbedding is a tensor containing embeddings for all answers.
+                * You can call `arraySync()` to retrieve the values of the tensor.
+                * In this example, embed_query[0] is the embedding for the query
+                * 'How are you feeling today?'
+                * And embed_responses[0] is the embedding for the answer
+                * 'I\'m not feeling very well.'
+                */
+                const embed_query = embeddings['queryEmbedding'].arraySync();
+                const embed_responses = embeddings['responseEmbedding'].arraySync();
 
-                    /*
-                    modelEN = {
-                    queries: [query],
-                    responses: [
-                        'I\'m very fine today.',
-                        'Please check <a href=https://ja.wikipedia.org/wiki/>Wikipedia</a>.',
-                        'You have five fingers on your hand.',
-                        'Here, <a href=https://www.jma.go.jp/bosai/#area_type=class20s&area_code=1310700&pattern=forecast target=_blank>weather forecast for Tokyo</a>.',
-                        'Sorry, I might not be able to help you with that.',
-                        'Please check out on <a href=https://www.google.co.jp/maps/>Google Maps</a>.',
-                        'You are quite entertainer.',
-                        'Here, <a href=https://rsguitar.rakurakuseisan.jp/nGNrtMlFZKa/>Rakuraku-seisan</a> cost adjastment system.',
-                        'Here, check your itinerary on <a href=https://transit.yahoo.co.jp/>Yahoo Transit</a>.',
-                        'You are welcome.',
-                        'That is not nice to say.',
-                    ]
-                    };
-                    */
-                    isOnline();
-                    const embeddings = model.embed(modelEN);
-                    /*
-                    * The output of the embed method is an object with two keys:
-                    * {
-                    *  queryEmbedding: tf.Tensor;
-                    *  responseEmbedding: tf.Tensor;
-                    * }
-                    * queryEmbedding is a tensor containing embeddings for all queries.
-                    * responseEmbedding is a tensor containing embeddings for all answers.
-                    * You can call `arraySync()` to retrieve the values of the tensor.
-                    * In this example, embed_query[0] is the embedding for the query
-                    * 'How are you feeling today?'
-                    * And embed_responses[0] is the embedding for the answer
-                    * 'I\'m not feeling very well.'
-                    */
-                    const embed_query = embeddings['queryEmbedding'].arraySync();
-                    const embed_responses = embeddings['responseEmbedding'].arraySync();
-
-                    let likelyresponse = "Tensorflow could not compute the likeliness.";
-                    let likeliness_max = 0;
-                    let likelyresponse_sub = [];
-                    // compute the dotProduct of each query and response pair.
-                    for (let i = 0; i < modelEN['queries'].length; i++) {
-                        for (let j = 0; j < modelEN['responses'].length; j++) {
-                            let likeliness_tensor = dotProduct(embed_query[i], embed_responses[j]);
-                            if (likeliness_max <= likeliness_tensor) {
-                                likeliness_max = likeliness_tensor;
-                                likelyresponse = modelEN.responses[j];
-                            }
+                let likelyresponse = "Tensorflow could not compute the likeliness.";
+                let likeliness_max = 0;
+                let likelyresponse_sub = [];
+                // compute the dotProduct of each query and response pair.
+                for (let i = 0; i < modelEN['queries'].length; i++) {
+                    for (let j = 0; j < modelEN['responses'].length; j++) {
+                        let likeliness_tensor = dotProduct(embed_query[i], embed_responses[j]);
+                        if (likeliness_max <= likeliness_tensor) {
+                            likeliness_max = likeliness_tensor;
+                            likelyresponse = modelEN.responses[j];
                         }
-                    };
-                })
+                    }
+                };
+                createChat("tf", likelyresponse);
             });
-
-        console.log(likelyresponse);
-            createChat("tf", likelyresponse);
         }
 
         // Calculate the dot product of two vector arrays.
@@ -428,6 +414,34 @@
                 return (xs.length <= ny ? xs : xs.slice(0, ny))
                     .map((x, i) => f(x, ys[i]));
             }
+        
+        // 日本語チャットルーチン
+        function answerJA(query){
+            var segmenter = new TinySegmenter();                 // インスタンス生成
+            var segs = segmenter.segment(query);  // 単語の配列が返る
+            let maxPoint = 0;
+            let responseText = "申し訳ありません。わかりませんでした。言い方を変えてみてください。";
+            createChat("user",query);
+            for(let i = 0; i < modelJA.queries.length; i++){
+                let counter = 0;
+                let segmentedQuery = new TinySegmenter().segment(modelJA.queries[i]);
+                let segmentedAnswer = new TinySegmenter().segment(modelJA.responses[i]);
+                segmentedQuery.push(segmentedAnswer.flat());
+                let segUnique = [... new Set(segs)];
+                for(let j = 0; j < segUnique.length;j++){
+                    for(let k = 0; k < segmentedQuery.length; k++){
+                        if(segmentedQuery[k] == segUnique[j]){
+                            counter++;
+                        }
+                    }
+                }
+                if(maxPoint < counter){
+                    maxPoint = counter;
+                    responseText = modelJA.responses[i];
+                }
+            }
+            createChat("tf",responseText);
+        }
 
         // チャット生成
         function createChat(user, msg) {
@@ -458,6 +472,26 @@
                 ctnr.style.display = "block";
             } else {
                 ctnr.style.display = "none";
+            }
+        }
+
+        function setsessionStorage(data,keyName){
+            if (window.sessionStorage) {
+                let json = JSON.stringify(data, undefined, 1);
+                sessionStorage.setItem(keyName, json); 
+                return true;
+            }else{
+                return false;
+            }
+        }
+
+        function getsessionStorage(keyName){
+            if (window.sessionStorage) {
+                let json = sessionStorage.getItem(keyName);
+                let array = JSON.parse(json);
+                return array;
+            }else{
+                return false;
             }
         }
 
