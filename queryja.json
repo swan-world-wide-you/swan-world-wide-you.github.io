@@ -1,0 +1,20 @@
+{
+            queries:[
+                "こんにちは",
+                "おはよう",
+                "こんばんは",
+                "おやすみ",
+                "天気　天気予報",
+                "乗換　乗り換え　乗り換える　行き方　電車　バス　駅　時刻表",
+                "マップ　地図　道を調べる　行き方　ナビ"
+            ],
+            responses:[
+                "こんちは！",
+                "おはようございます！",
+                "こんばんは！いい夜ですね。",
+                "おやすみなさい。",
+                "気象情報ですね！<a href=https://www.jma.go.jp/ target=_blank>気象庁</a>",
+                "乗り換えですね！こちらをどうぞ！<a href=https://transit.yahoo.co.jp/>Yahoo！乗換案内</a>",
+                "こちらをどうぞ！<a href=https://google.com/maps target=_blank>Google Maps</a>"
+            ]
+        }
