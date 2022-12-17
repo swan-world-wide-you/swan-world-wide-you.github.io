@@ -1,5 +1,5 @@
 {
-  queries: [
+  "queries": [
     'How are you?',
     'What does it mean?',
     'Will it rain today?',
@@ -10,7 +10,7 @@
     'Thanks a lot.',
     'Shit.'
   ],
-  responses: [
+  "responses": [
       'I\'m very fine today.',
       'Please check <a href=https://ja.wikipedia.org/wiki/>Wikipedia</a>.',
       'Here, <a href=https://www.jma.go.jp/bosai/#area_type=class20s&area_code=1310700&pattern=forecast target=_blank>weather forecast for Tokyo</a>.',
