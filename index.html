@@ -309,7 +309,8 @@
                     modelJA = JSON.parse(result);
                 }
             }
-            request.open("GET", "https://swan-world-wide-you.github.io/model" + lang + ".json");
+//            request.open("GET", "https://swan-world-wide-you.github.io/model" + lang + ".json");
+            request.open("GET","https://script.google.com/macros/s/AKfycbzLYMdZ47874S7O5LA0UKGz5uISvHlXrieFpBtWKECKX4ZemBMifNygtz6MixuqT6J-/exec?sheetName=model"+lang);
             request.send();
         }
 
