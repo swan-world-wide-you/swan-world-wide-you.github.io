@@ -12,12 +12,12 @@
   ],
   "responses": [
       "I'm very fine today.",
-      "Please check <a href=https://ja.wikipedia.org/wiki/ target=_blank>Wikipedia</a>.",
+      "about,2|Please check <a href=https://ja.wikipedia.org/wiki/%query% target=_blank>Wikipedia</a>.",
       "Here, <a href=https://www.jma.go.jp/bosai/#area_type=class20s&area_code=1310700&pattern=forecast target=_blank>weather forecast for Tokyo</a>.",
       "Sorry, I might not be able to help you with that.",
-      "Please check out on <a href=https://www.google.co.jp/maps/ target=_blank>Google Maps</a>.",
+      "of,2|Please check out on <a href=https://www.google.co.jp/maps/ target=_blank>Google Maps</a>.",
       "You are quite entertainer.",
-      "Here, check your itinerary on <a href=https://transit.yahoo.co.jp/ target=_blank>Yahoo Transit</a>.",
+      "from,2|Here, check your itinerary on <a href=https://transit.yahoo.co.jp/ target=_blank>Yahoo Transit</a>.",
       "You are welcome.",
       "That is not nice to say."
   ]
