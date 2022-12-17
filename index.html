@@ -7,295 +7,8 @@
     <!-- JavaScript Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/tiny-segmenter@0.2.0/lib/index.min.js" charset="UTF-8"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
   </head>
 <body>
-<!--
-    <div class="container">
-    <h1>ColorPickAI</h1>
-    <div class="input-group mb-4">
-      <div class="input-group-text">色を選んでください</div>
-      <div class="form-control">
-        <input type="color" id="input_color" class="form-control">
-      </div>
-      <button onclick="isDark()" class="btn btn-primary">明暗判定</button>
-    </div>
-    <div>
-      <div id="judge_result" class="mb-4"></div>
-    </div>
-    <div class="input-group mb-4">
-      <div class="input-group-text">AIの判定</div>
-      <div id="result" class="form-control"></div>
-    </div>
-  </div>
-  <div class="container">
-    <h1>Segmenter</h1>
-    <div class="input-group mb-4">
-      <div class="input-group-text">文章を入力</div>
-      <input id="textarea_tokenize">
-      <button class="btn btn-primary" onclick="segment()">解析</button>
-    </div>
-    <div class="container">
-      <h4>解析結果</h4>
-      <div id="stage"></div>
-      <div id="tokens"></div>
-    </div>
-  </div>
-  </div>
-    <script>
-        // brain.js はじめ
-        const net = new brain.recurrent.LSTMTimeStep({
-          inputSize: 2,
-          hiddenLayers: [10],
-          outputSize: 2,
-        });
-
-        // Same test as previous, but combined on a single set
-        const trainingData = [
-          [
-            [1, 5],
-            [2, 4],
-            [3, 3],
-            [4, 2],
-            [5, 1],
-          ],
-        ];
-
-        net.train(trainingData, { log: true, errorThresh: 0.09 });
-
-        const closeToFiveAndOne = net.run([
-          [1, 5],
-          [2, 4],
-          [3, 3],
-          [4, 2],
-        ]);
-
-        console.log(closeToFiveAndOne);
-
-        // now we're cookin' with gas!
-        const forecast = net.forecast(
-          [
-            [1, 5],
-            [2, 4],
-          ],
-          3
-        );
-
-        console.log('next 3 predictions', forecast);
-        // brain.js おわり
-        
-        // ニューラルネットワークによる色判定
-        const net2 = new brain.NeuralNetwork();
-        // Train the Network with 4 input objects
-        net2.train([
-            // White RGB(255, 255, 255)
-            {input:[255/255, 255/255, 255/255], output:{light:1}},
-            // Light grey (192,192,192)
-            {input:[192/255, 192/255, 192/255], output:{light:1}},
-            // Darkgrey (64, 64, 64)
-            {input:[65/255, 65/255, 65/255], output:{dark:1}},
-            // Black (0, 0, 0)
-            {input:[0, 0, 0], output:{dark:1}},
-            // red (255,0,0)
-            {input:[255,0,0], output:{light:1}},
-            // green (0,255,0)
-            {input:[0,255,0], output:{light:1}},
-            // blue (0,0,255)
-            {input:[0,0,255], output:{dark:1}}
-        ]);
-
-        function isDark(){
-        // What is the expected output of Dark Blue (0, 0, 128);
-        const color = document.getElementById("input_color").value;
-        console.log(color);
-        const rHex = parseInt(color.substr(1,2),16);
-        const gHex = parseInt(color.substr(3,2),16);
-        const bHex = parseInt(color.substr(5,2),16);
-        const r = parseInt(rHex,10) / 255;
-        const g = parseInt(gHex,10) / 255;
-        const b = parseInt(bHex,10) / 255;
-        console.log(rHex,gHex,bHex);
-        let result = net2.run([r, g, b]);
-
-        // Display the probability of "dark" and "light"
-        document.getElementById("result").innerHTML = "暗い確率:" + Math.round(result["dark"]*100) + "% / 明るい確率" + Math.round(result["light"]*100) + "%";
-            
-        if(result["dark"] > result["light"]){
-            document.getElementById("judge_result").innerHTML = "暗い🌑";
-        }else{
-            document.getElementById("judge_result").innerHTML = "明るい🌞";
-        }
-        }
-
-        // tokenizer
-        let segmenter = new TinySegmenter();                 // インスタンス生成
-        function segment(){
-          let textarea = document.getElementById("textarea_tokenize").value;
-          const tablearea = document.getElementById("tokens");
-          var segs = segmenter.segment(textarea);  // 単語の配列が返る
-          let segUnique = new Set([...segs]);
-          let segArray = [];
-          segUnique.forEach((segU) => {
-            let count = 0;
-            segs.forEach((seg)=>{
-              if(segU == seg){
-                count++;
-              }
-            });
-            segArray.push([count,segU]);
-          });
-          const avg = segs.length / segArray.length;
-          let segEvalSqTtl = 0;
-          for(let i = 0; i < segArray.length; i++){
-            let segEval = segArray[i][0] - avg; // 平均との差
-            let segEvalSq = segEval**2; // 平均値の2乗
-            segEvalSqTtl += segEvalSq;
-          }
-          const standard = Math.sqrt(segEvalSqTtl / segs.length); // 2乗の平均の平方根＝標準偏差
-          for(let i = 0; i < segArray.length; i++){
-            let segEval = segArray[i][0] - avg; // 平均との差
-            let segStd = segEval / standard; // 偏差値
-            segStd = segStd * 10 + 50 // 学校でおなじみのバイアスされた偏差値
-            segArray[i].push(segStd);
-          }
-          segArray.sort((a,b) => {
-            let pa = parseInt(a,10);
-            let pb = parseInt(b,10);
-            if(pa > pb){return -1;}
-            else if(pa < pb){return 1;}
-            else{return 0;}});
-          segArray.unshift(["度数","トークン","偏差値"]);
-
-          let plotx = [];
-          let ploty = [];
-          for(let i = 1; i < segArray.length;i++){
-            plotx.push(segArray[i][1]);
-            ploty.push(segArray[i][0]);
-          }
-
-          let data = [{
-            x: plotx,
-            y: ploty,
-            type: 'bar'
-          }];
-          let options = {
-            title: '入力された文書の度数'
-          };
-
-          tablearea.innerHTML = createTableTag(segArray,"table_token",{header:true,class:"table table-striped",headerSortable:true},0,1,2);
-          Plotly.plot('stage', data, options);
-
-        }
-
-        /** createTableTag tableタグを生成します。
-         * @param {string[[]]} dataset データセットです。
-         * @param {string} tableId テーブルIDです。
-         * @param {JSON} options データセットオプションです。
-         * @param {string} 表示する列です。0で始まります。
-         * @return {string} HTMLタグです。
-         */
-        function createTableTag(dataset,tableId,options,...args){
-            let htmlOutput = "<table ";
-            if(tableId){
-                htmlOutput += "id='" +tableId+ "' ";
-            }else{
-                console.warn("この関数の実行にはtableIdが必要です。");
-            }
-            if(options.class){
-                htmlOutput += "class='" +options.class+ "' ";
-            }
-            if(options.name){
-                htmlOutput += "name='" +options.name+"' ";
-            }
-            if(options.style){
-                htmlOutput += "style='" +options.style+"' ";
-            }
-            htmlOutput += ">";
-
-            for(let i = 0; i < dataset.length; i++){
-                let actualCol = 0;
-                htmlOutput += "<tr id='"+tableId+"_"+i+"'>";
-                for(const colNo of args){
-                    if(options.header && i == 0){
-                        if(options.headerSortable){
-                            htmlOutput += "<th onclick='sortTable(`"+tableId+"`,"+ actualCol +")'>";
-                        }else{
-                            htmlOutput += "<th>";
-                        }
-                        htmlOutput += dataset[i][colNo] + "<span id='"+tableId+"_arrow"+actualCol+"'></span></th>";
-                    }else{
-                        htmlOutput += "<td id='"+tableId+"_"+i+"-"+actualCol+"'>" + dataset[i][colNo] + "</td>";
-                    }
-                    actualCol++;
-                }
-                htmlOutput += "</tr>";
-            }
-            htmlOutput += "</table>";
-            return htmlOutput;
-        }
-
-        //----TABLE SORTER----//
-            
-        function sortTable(tableId,n) {
-            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-            table = document.getElementById(tableId);
-            switching = true;
-            // Set the sorting direction to ascending:
-            dir = "asc";
-            /* Make a loop that will continue until
-            no switching has been done: */
-            while (switching) {
-                // Start by saying: no switching is done:
-                switching = false;
-                rows = table.rows;
-                /* Loop through all table rows (except the
-                first, which contains table headers): */
-                for (i = 1; i < (rows.length - 1); i++) {
-                    // Start by saying there should be no switching:
-                    shouldSwitch = false;
-                    /* Get the two elements you want to compare,
-                    one from current row and one from the next: */
-                    x = rows[i].getElementsByTagName("TD")[n];
-                    y = rows[i + 1].getElementsByTagName("TD")[n];
-                    /* Check if the two rows should switch place,
-                    based on the direction, asc or desc: */
-                    if (dir == "asc") {
-                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                            // If so, mark as a switch and break the loop:
-                            shouldSwitch = true;
-                            document.getElementById(tableId+"_arrow"+n).innerText = "▼";
-                            break;
-                        }
-                    } else if (dir == "desc") {
-                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                            // If so, mark as a switch and break the loop:
-                            shouldSwitch = true;
-                            document.getElementById(tableId+"_arrow"+n).innerText = "▲";
-                            break;
-                        }
-                    }
-                }
-                if (shouldSwitch) {
-                    /* If a switch has been marked, make the switch
-                    and mark that a switch has been done: */
-                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                    switching = true;
-                    // Each time a switch is done, increase this count by 1:
-                    switchcount ++;
-                } else {
-                    /* If no switching has been done AND the direction is "asc",
-                    set the direction to "desc" and run the while loop again. */
-                    if (switchcount == 0 && dir == "asc") {
-                        dir = "desc";
-                        switching = true;
-                    }
-                }
-            }
-        }
-    
-    </script>
--->
 
     <!-- Tensorflow Universal Sentence Encoder(トークン：use) -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
@@ -306,13 +19,74 @@
 
     <div class="container">
         <h1>Tensorflow NLP</h1>
+        　そのころわたくしは、モリーオ市の博物局に勤めて居りました。
+　十八等官でしたから役所のなかでも、ずうっと下の方でしたし俸給ほうきゅうもほんのわずかでしたが、受持ちが標本の採集や整理で生れ付き好きなことでしたから、わたくしは毎日ずいぶん愉快にはたらきました。殊にそのころ、モリーオ市では競馬場を植物園に拵こしらえ直すというので、その景色のいいまわりにアカシヤを植え込んだ広い地面が、切符売場や信号所の建物のついたまま、わたくしどもの役所の方へまわって来たものですから、わたくしはすぐ宿直という名前で月賦で買った小さな蓄音器と二十枚ばかりのレコードをもって、その番小屋にひとり住むことになりました。わたくしはそこの馬を置く場所に板で小さなしきいをつけて一疋の山羊を飼いました。毎朝その乳をしぼってつめたいパンをひたしてたべ、それから黒い革のかばんへすこしの書類や雑誌を入れ、靴もきれいにみがき、並木のポプラの影法師を大股にわたって市の役所へ出て行くのでした。
+　あのイーハトーヴォのすきとおった風、夏でも底に冷たさをもつ青いそら、うつくしい森で飾られたモリーオ市、郊外のぎらぎらひかる草の波。
+　またそのなかでいっしょになったたくさんのひとたち、ファゼーロとロザーロ、羊飼のミーロや、顔の赤いこどもたち、地主のテーモ、山猫博士のボーガント・デストゥパーゴなど、いまこの暗い巨きな石の建物のなかで考えていると、みんなむかし風のなつかしい青い幻燈のように思われます。では、わたくしはいつかの小さなみだしをつけながら、しずかにあの年のイーハトーヴォの五月から十月までを書きつけましょう。
+
+　　　　　　　一、遁げた山羊
+
+　五月のしまいの日曜でした。わたくしは賑にぎやかな市の教会の鐘の音で眼をさましました。もう日はよほど登って、まわりはみんなきらきらしていました。時計を見るとちょうど六時でした。わたくしはすぐチョッキだけ着て山羊を見に行きました。すると小屋のなかはしんとして藁わらが凹んでいるだけで、あのみじかい角も白い髯も見えませんでした。
+「あんまりいい天気なもんだから大将ひとりででかけたな。」
+　わたくしは半分わらうように半分つぶやくようにしながら、向うの信号所からいつも放して遊ばせる輪道の内側の野原、ポプラの中から顔をだしている市はずれの白い教会の塔までぐるっと見まわしました。けれどもどこにもあの白い頭もせなかも見えていませんでした。うまやを一まわりしてみましたがやっぱりどこにも居ませんでした。
+「いったい山羊は馬だの犬のように前居たところや来る道をおぼえていて、そこへ戻っているということがあるのかなあ。」
+　わたくしはひとりで考えました。さあ、そう思うと早くそれを知りたくてたまらなくなりました。けれども役所のなかとちがって競馬場には物知りの年とった書記も居なければ、そんなことを書いた辞書もそこらにありませんでしたから、わたくしは何ということなしに輪道を半分通って、それからこの前山羊が村の人に連れられて来た路をそのまま野原の方へあるきだしました。
+　そこらの畑では燕麦えんばくもライ麦ももう芽をだしていましたし、これから何か蒔まくとこらしくあたらしく掘り起こされているところもありました。
+　そしていつかわたくしは町から西南の方の村へ行くみちへはいってしまっていました。
+　向うからは黒い着物に白いきれをかぶった百姓のおかみさんたちがたくさん歩いてくるようすなのです。わたくしは気がついて、もう戻ってしまおうと思いました。全くの起きたままチョッキだけ着て顔もあらわず帽子もかむらず山羊が居るかどうかもわからない広い畑のまんなかへ飛びだして来ているのです。けれどもそのときはもう戻るのも工合が悪くなってしまっていました。向うの人たちがじき顔の見えるところまで来ているのです。わたくしは思い切って勢よく歩いて行っておじぎをして尋ねました。
+「こっちへ山羊が迷って来ていませんでしたでしょうか。」
+　女の人たちはみんな立ちどまってしまいました。教会へ行くところらしくバイブルも持っていたのです。
+「こっちへ山羊が一疋迷って来たんですが、ご覧になりませんでしたでしょうか。」
+　みんなは顔を見合せました。それから一人が答えました。
+「さあ、わたくしどもはまっすぐに来ただけですから。」
+　そうだ、山羊が迷って出たときに人のようにみちを歩くのではないのです。わたくしはおじぎしました。
+「いや、ありがとうございました。」女たちは行ってしまいました。もう戻ろう、けれどもいま戻るとあの女の人たちを通り越して行かなければならない、まあ散歩のつもりでもすこし行こう、けれどもさっぱりたよりない散歩だなあ、わたくしはひとりでにがわらいしました。そのとき向うから二十五六になる若者と十七ばかりのこどもとスコップをかついでやって来ました。もう仕方ない、みかけだけにたずねて見よう、わたくしはまたおじぎしました。
+「山羊が一疋迷ってこっちへ来たのですが、ごらんになりませんでしたでしょうか。」
+「山羊ですって、いいえ。連れてあるいて遁にげたのですか。」
+「いいえ、小屋から遁げたんです。いや、ありがとうございました。」
+　わたくしはおじぎをしてまたあるきだしました。するとそのこどもがうしろで云いました。
+「ああ、向うから誰か来るなあ。あれそうでないかなあ。」
+　わたくしはふりかえって指ざされたほうを見ました。
+「ファゼーロだな、けれども山羊かなあ。」
+「山羊だよ。ああきっとあれだ。ファゼーロがいまごろ山羊なんぞ連れてあるく筈ないんだから。」
+　たしかにそれは山羊でした。けれどもそれは別ので売りに町へ行くのかもしれない、まああの指導標のところまで行って見よう、わたくしはそっちへ近づいて行きました。一人の頬の赤いチョッキだけ着た十七ばかりの子どもが、何だかわたくしのらしい雌めすの山羊の首に帯皮をつけて、はじを持ってわらいながらわたくしに近よって来ました。どうもわたくしのらしいけれども何と云おうと思いながら、わたくしはたちどまりました。すると子どもも立ちどまってわたくしにおじぎしました。
+「この山羊はおまえんだろう。」
+「そうらしいねえ。」
+「ぼく出てきたらたった一疋で迷っていたんだ。」
+「山羊もやっぱり犬のように一ぺんあるいた道をおぼえているのかねえ。」
+「おぼえてるとも。じゃ。やるよ。」
+「ああ、ほんとうにありがとう。わたしはねえ、顔も洗わないで探しに来たんだ。」
+「そんなに遠くから来たの。」
+「ああ、わたしは競馬場に居るからねえ。」
+「あすこから？」
+　子どもは山羊の首から帯皮をとりながら畑の向うでかげろうにぎらぎらゆれている、やっと青みがかったアカシヤの列を見ました。
+「すいぶん遠くまで来たんだねえ。」
+「ああ、じゃ、僕こっちへ行くんだから。さよなら。」
+「あ、ちょっと待って。ぼくなにかあげたいんだけれどもなんにもなくてねえ。」
+「いいや、ぼくなんにもいらないんだ。山羊を連れてくるのは面白かった。」
+「だけれどねえ、それではわたしが気が済まないんだよ。そうだ、あなたは鎖はいらないの。」
+　わたくしは時計の鎖なら、なくても済むと思いながら銀の鎖をはずしました。
+「いいや。」
     </div>
-    <div class="mb-4">
+
+    <!-- Chat -->
+    <div id="chatBtn" class="c-chatBtn" onclick="chatToggle()">
+        <div  style="position:relative; top:10px; bottom: auto; left:15px;right: auto;">
+            <i class="bi bi-chat-left-dots"></i>
+        </div>
+    </div>
+    <div class="mb-4 chatWrapper" id="chatWrapper" style="display:none">
         <div id="chatContainer" class="c-chatContainer">
-            <div class="c-chatHeader"><i class="bi bi-robot"></i>Consierge</div>
+            <div class="c-chatHeader"><i class="bi bi-robot"></i>Consierge<br>
+                AI Model: EN <span id="c-status-EN"><i class="bi bi-wifi-off"></i></span> / 
+                JA <span id="c-status-JA"><i class="bi bi-wifi-off"></i></span>
+            </div>
+            <div class="c-chatCloseBtn" onclick="chatToggle()">
+                <h3><i class="bi bi-x-lg"></i></h3>
+            </div>
             <div class="c-chatBody">
                 <div id="c-chat"></div>
-                <div id="spinner-chat" class="mb-4" style="display:none;">
+                <div id="spinner-chat" class="mb-4 c-spin" style="display:none;">
                     <div class="spinner-border" role="status">
                     <span class="visually-hidden">Loading...</span>
                     </div>
@@ -321,23 +95,38 @@
                 </div>    
             </div>
             <div class="mb-4 c-chatForm">
-                <div class="input-group">
-                    <div class="input-group-text"><i class="bi bi-pencil-fill"></i></div>
+                <div class="input-group c-chatBox">
+                    <select id="langSelect" class="input-group-text">
+                        <option value="en">Aa</option>
+                        <option value="ja">あ</option>
+                    </select>
                     <input id="input_query" placeholder="Write something in English..." class="form-control">
-                    <div class="btn btn-primary" onclick="{answerQA(document.getElementById('input_query').value);createChat('user',document.getElementById('input_query').value);}"><i class="bi bi-send"></i></div>
+                    <div class="btn btn-primary" onclick="{answerQA(document.getElementById('input_query').value)}"><i class="bi bi-send"></i></div>
                 </div>
             </div>
         </div>
     </div> 
 
 <style>
-
-.c-chatContainer{
-        height: 100%;
-        width: 100%;
-        top:0;
-        left:0;
+    .c-chatBtn{
+        height:45px;
+        width:45px;
+        border-radius: 22.5px;
+        bottom: 20px;
+        right:20px;
+        position: fixed;
+        box-shadow: 10px 10px 10px grey;
+        background-color: dodgerblue;
+        color: white;
+    }
+    .c-chatContainer{
+        height: 540px;
+        width: 420px;
+        bottom:75px;
+        right:20px;
         position:fixed;
+        box-shadow: 10px 10px 10px grey;
+        border-radius: 20px;
     }
     .c-chatHeader{
         height: 50px;
@@ -347,14 +136,36 @@
         position: relative;
         background-color: grey;
         color: white;
-        text-shadow: 3px;
         text-align: center;
+        vertical-align: middle;
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+    }
+    .c-chatCloseBtn{
+        position: absolute;
+        color:white;
+        background-color: salmon;
+        top:0px;
+        right:0px;
+        height:50px;
+        width:50px;
+        align-items: center;
+        text-align: center;
+        justify-content: center;
+        display:none;
     }
     .c-chatBody{
-        position:absolute; width: 100vw; height: calc(80vh - 50px);left: 0px; top: 50px; background-color:lightskyblue; overflow-y:scroll;
+        position:relative; width: 100%; height: 80%;left: 0px; top: 0px; background-color:lightskyblue; overflow-y:scroll;
     }
     .c-chatForm{
-        position:absolute; width: 100vw; height:20vh;left: 0px; top:80vh; background-color:lightgrey;
+        position:relative; width: 100%; height:calc(20% - 50px);left: 0px; top:0; background-color:lightgrey;
+        border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;
+    }
+    .c-chatBox{
+        position:relative; padding:5px;
+    }
+    .c-spin{
+        padding: 15px;
     }
     .chat-conversation-wrapper{
         display: block;
@@ -389,24 +200,82 @@
         width:fit-content;
     }
     .c-chatContents{
-    padding: 8px;
-    position: relative;
-    display: inline-block;
-    word-wrap: break-word;
-    box-sizing: border-box;
-    max-width: 60%;
+        padding: 8px;
+        position: relative;
+        display: inline-block;
+        word-wrap: break-word;
+        box-sizing: border-box;
+        max-width: 60%;
     }
     body {
       min-width: 300px;
       min-height: 300px;
     }
+    @media screen and (max-width: 480px) {
+	/* 480px以下に適用されるCSS（スマホ用） */
+    .c-chatContainer{
+        height: 100%;
+        width: 100%;
+        top:0px;
+        left:0px;
+        position:fixed;
+    }
+    .c-chatHeader{
+        border-top-left-radius: 0px;
+        border-top-right-radius: 0px;
+    }
+    .c-chatForm{
+        border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;
+    }
+    .c-chatCloseBtn{
+        float:right;
+        display:flex;
+    }
+    }
 </style>
 
 <script>
+    let modelEN;
+    let modelJA;
+
+    const statusmsg = ["<i class='bi bi-wifi-off'></i>","<i class='bi bi-cloud-arrow-down'></i>"];
+    function isOnline(){
+        if(modelEN){
+            document.getElementById("c-status-EN").innerHTML = statusmsg[1];
+        }else{
+            document.getElementById("c-status-EN").innerHTML = statusmsg[0];
+        }
+        if(modelJA){
+            document.getElementById("c-status-JA").innerHTML = statusmsg[1];
+        }else{
+            document.getElementById("c-status-JA").innerHTML = statusmsg[0];
+        }
+    }
+
     function answerQA(query){
         const spinner = document.getElementById("spinner-chat");
         spinner.style.display = "block";
         document.getElementById("input_query").disabled = true;
+        switch(document.getElementById("langSelect").value){
+            case "en":
+                answerEN(query);
+                break;
+            case "ja":
+                answerJA(query);
+                break;
+            default:
+                createChat("tf","Failed to compute. Please check if you are online.");
+        }
+        spinner.style.display = "none";
+        document.getElementById("input_query").disabled = false;
+        
+    }
+    function answerEN(query){
+        if(!query){
+            createChat("tf","Say something.");
+            return;
+        }
+        createChat('user',document.getElementById('input_query').value);
         // Load the model.
         use.loadQnA().then(model => {
         // Embed a dictionary of a query and responses. The input to the embed method
@@ -423,7 +292,7 @@
         // }
         // context is optional, it provides the context string of the answer.
 
-        let input = {
+        modelEN = {
         queries: [query],
         responses: [
             'I\'m very fine today.',
@@ -439,8 +308,8 @@
             'That is not nice to say.',
         ]
         };
-        var scores = [];
-        const embeddings = model.embed(input);
+        isOnline();
+        const embeddings = model.embed(modelEN);
         /*
         * The output of the embed method is an object with two keys:
         * {
@@ -462,27 +331,18 @@
         let likeliness_max = 0;
         let likelyresponse_sub = [];
         // compute the dotProduct of each query and response pair.
-        for (let i = 0; i < input['queries'].length; i++) {
-        for (let j = 0; j < input['responses'].length; j++) {
+        for (let i = 0; i < modelEN['queries'].length; i++) {
+        for (let j = 0; j < modelEN['responses'].length; j++) {
             let likeliness_tensor = dotProduct(embed_query[i], embed_responses[j]);
-            scores.push(likeliness_tensor);
             if(likeliness_max <= likeliness_tensor){
                 likeliness_max = likeliness_tensor;
-                likelyresponse = input.responses[j];
+                likelyresponse = modelEN.responses[j];
             }
         }
         }
 
-        // もしかして
-        for(let i = 0; i < scores.length; i++){
-            if(likeliness_max*0.9 < scores[i]){// 類似度9割超え
-                likelyresponse_sub.push(input.responses[i]);
-            }
-        }
-        console.log(likelyresponse,scores);
-        spinner.style.display = "none";
-        document.getElementById("input_query").disabled = false;
-        createChat("tf",likelyresponse,likelyresponse_sub);
+        console.log(likelyresponse);
+        createChat("tf",likelyresponse);
         });
     }
 
@@ -504,7 +364,7 @@
     }
 
     // チャット生成
-    function createChat(user,msg,msgsub){
+    function createChat(user,msg){
         const parentdiv = document.createElement("div");
         parentdiv.classList.add("chat-conversation-wrapper");
 
@@ -521,13 +381,18 @@
         parentdiv.appendChild(div);
 
         document.getElementById("c-chat").appendChild(parentdiv);
-        if(msgsub.length > 1){
-            for(let i = 1; i < msgsub.length; i++){
-                createChat("tf","You might have meant: " + msgsub[i] + "<br>","");
-            }
-        }
         parentdiv.scrollIntoView();
         document.getElementById('input_query').value = '';
+    }
+
+    // チャットウィンドウを表示/非表示
+    function chatToggle(){
+        const ctnr = document.getElementById("chatWrapper");
+        if(ctnr.style.display == "none"){
+            ctnr.style.display = "block";
+        }else{
+            ctnr.style.display = "none";
+        }
     }
 
 </script>
