@@ -13,6 +13,7 @@
         crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/tiny-segmenter@0.2.0/lib/index.min.js"
      charset="UTF-8"></script>
+    <title>チャットボット実験場</title>
 </head>
 
 <body>
@@ -235,6 +236,15 @@
             border-radius: 9px 9px 0 9px;
             width: fit-content;
         }
+        .c-chatBorder{
+                width: 100%;
+                background-color: darkblue;
+                color: white;
+                font-size: smaller;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+            }
 
         .c-chatContents {
             padding: 8px;
@@ -243,6 +253,10 @@
             word-wrap: break-word;
             box-sizing: border-box;
             max-width: 60%;
+        }
+        .c-chatWikiThumb{
+            position: relative;
+            max-width: 100%;
         }
 
         body {
@@ -287,7 +301,8 @@
     <script>
         let modelEN;
         let modelJA;
-        const dow = [["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],["日","月","火","水","木","金","土"]];
+        let context = "qa"; // 初期値としてqaを設定
+        const dow = [["Sun","Mon","Tues","Wednes","Thurs","Fri","Satur"],["日","月","火","水","木","金","土"]];
 
         function onloadFunc(){
             // GITHUBレポジトリからモデルを読み込み
@@ -367,24 +382,34 @@
             }
         }
 
+        // チャット送信ボタンを押した分岐
         function answerQA(query) {
             const spinner = document.getElementById("spinner-chat");
             spinner.style.display = "block";
             document.getElementById("input_query").disabled = true;
-            switch (document.getElementById("langSelect").value) {
-                case "en":
-                    answerEN(query);
-                    break;
-                case "ja":
-                    answerJA(query);
-                    break;
-                default:
-                    createChat("tf", "Failed to compute. Please check if you are online.");
+            if(context == "qa"){
+                switch (document.getElementById("langSelect").value) {
+                    case "en":
+                        answerEN(query);
+                        break;
+                    case "ja":
+                        answerJA(query);
+                        break;
+                    default:
+                        createChat("tf", "Failed to compute. Please check if you are online.");
+                }
+            }
+            if(context == "wiki"){
+                getWiki(query);
+            }
+            if(context == "navi"){
+                getNavi(query);
             }
             spinner.style.display = "none";
             document.getElementById("input_query").disabled = false;
         }
 
+        // tensorflow
         function answerEN(query) {
             if (!query) {
                 createChat("tf", "Say something.");
@@ -490,6 +515,69 @@
                 }
             }
             createChat("tf",responseText);
+        }
+
+        // wikipedia apifetch
+        function getWiki(query){
+            const lang = document.getElementById("langSelect").value;
+            let queryReplaced = query.replaceAll(" ","_");
+            createChat("user",query);
+            const request = new XMLHttpRequest();
+            request.open("GET","https://"+lang+".wikipedia.org/api/rest_v1/page/summary/"+query);
+            request.onloadend = () => {
+                if(request.status == 404){
+                    createChat("tf","Nothing found for your query: "+query);
+                    return;
+                }
+                const response = JSON.parse(request.response);
+                if(response.content_urls.desktop){
+                    let chatBody = "<h4>"+response.title+"</h4><hr><p>"+response.extract;
+                        if(response.thumbnail){
+                            chatBody += "<hr><div class=container><img src='"+response.thumbnail.source+"' alt='No thumbnail available' class='c-chatWikiThumb'></div>"
+                        }
+                        chatBody += "<hr>Source:<a href="+response.content_urls.desktop.page+" target=_blank>Wikipedia</a><br>";
+                        chatBody += "<a class='btn btn-primary col-12' onclick='changeContext(`qa`,`QA Mode Activated`)'>Exit Wikipedia Mode</a>";
+                    createChat("tf",chatBody);
+                }
+            }
+            request.send();
+        }
+
+        function getNavi(query){
+            const lang = document.getElementById("langSelect").value;
+            let fromPlace;
+            let toPlace;
+            if(lang == "en"){
+                fromPlace = query.split(" to ")[0];
+                toPlace = query.split(" to ")[1];
+            }
+            if(lang == "ja"){
+                fromPlace = query.split("から")[0];
+                toPlace = query.split("から")[1];
+            }
+            let url = "https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(fromPlace)+"&destination="+encodeURIComponent(toPlace)+"&travelmode=transit";
+            let msg = fromPlace+" → "+toPlace+"<br><a href="+url+" target=_blank class='btn btn-primary col-12'>Google Maps</a><hr>";
+            msg += "<a class='btn btn-primary col-12' onclick='changeContext(`qa`,`QA Mode Activated`)'>Exit Navi Mode</a>";
+            createChat("tf",msg);
+        }
+
+        // モードを変更する
+        function changeContext(contextName,msg){
+            createBorder("Mode changed to "+contextName);
+            createChat("tf",msg)
+            context = contextName;
+        }
+
+        // モード変更ラインを描画する
+        function createBorder(msg){
+            const parentdiv = document.createElement("div");
+            parentdiv.classList.add("chat-conversation-wrapper");
+            const div = document.createElement("div");
+            div.classList.add("c-chatBorder");
+            div.innerHTML = msg;
+            parentdiv.appendChild(div);
+            document.getElementById("c-chat").appendChild(parentdiv);
+            parentdiv.scrollIntoView();
         }
 
         // チャット生成
