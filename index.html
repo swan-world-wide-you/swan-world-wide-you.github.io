@@ -645,3 +645,12 @@
         }
 
     </script>
+    <script src="https://swan-world-wide-you.github.io/kuromoji.js"></script>
+    <script>
+    function getWordType(word){
+        kuromoji.builder({ dicPath: "/dict" }).build(function (err, tokenizer) {
+        // tokenizer is ready
+            var path = tokenizer.tokenize(word);
+            console.log(path);
+        });
+    </script>
