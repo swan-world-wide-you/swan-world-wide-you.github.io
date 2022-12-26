@@ -86,7 +86,7 @@
             <i class="bi bi-chat-left-dots"></i>
         </div>
     </div>
-    <div class="mb-4 chatWrapper" id="chatWrapper" style="display:none">
+    <div class="mb-4 chatWrapper botContainer" id="chatWrapper" style="display:none">
         <div id="chatContainer" class="c-chatContainer">
             <div class="c-chatHeader"><i class="bi bi-robot"></i>Consierge<br>
                 AI Model: EN <span id="c-status-EN"><i class="bi bi-wifi-off"></i></span> /
@@ -294,6 +294,40 @@
             .c-chatCloseBtn {
                 float: right;
                 display: flex;
+            }
+        }
+                .fadeup{
+            animation-name: fadeUpAnime;/*アニメーションの定義名*/
+            animation-duration:1s;/*アニメーション変化時間 ※デフォルト*/
+            animation-fill-mode:forwards;/*アニメーションの開始と終了時の状態を指定*/
+            opacity:0;
+        }
+        .fadedown{
+            animation-name: fadedownAnime;/*アニメーションの定義名*/
+            animation-duration:1s;/*アニメーション変化時間 ※デフォルト*/
+            animation-fill-mode:forwards;/*アニメーションの開始と終了時の状態を指定*/
+            opacity:0;
+        }
+        /*アニメーションの開始から終了までを指定する*/
+        @keyframes fadeUpAnime{
+        from {
+            opacity: 0;
+        transform: translateY(100px);
+        }
+
+        to {
+            opacity: 1;
+        transform: translateY(0);
+        }
+        }
+        @keyframes fadedownAnime{
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(100px);
             }
         }
     </style>
@@ -642,6 +676,20 @@
             num = "0" + num.toString();
         }
         return num;
+        }
+        
+        // chatBtn チャットボットをフェードアップ・ダウンする
+        function chatBtn(){
+            const ctnr = document.getElementsByClassName("botContainer");
+            for(let i = 0; i < ctnr.length; i++){
+                if(ctnr[i].classList.contains("fadeup")){
+                    ctnr[i].classList.remove("fadeup");
+                    ctnr[i].classList.add("fadedown");
+                }else{
+                    ctnr[i].classList.remove("fadedown");
+                    ctnr[i].classList.add("fadeup");
+                }
+            }
         }
 
     </script>
