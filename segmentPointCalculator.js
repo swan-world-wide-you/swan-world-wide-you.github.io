@@ -8,7 +8,18 @@
     ・<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/botui/build/botui-theme-default.css" />
     ・<script src="https://cdn.jsdelivr.net/vue/latest/vue.min.js"></script>
     ・<script src="https://cdn.jsdelivr.net/npm/botui/build/botui.js"></script>
+＊回答セットはJSONベースでやり取りされ、スキーマは以下の通り。
+    [
+        {
+            question:string,
+            response:string,
+            weightPoint:number
+        },...
+    ]
+＊通常は、searchAll(keyword,getFreqPoint(keyword,answers));の形で使うとよい。
 */
+
+
 
 // 度数分布に算定しない単語
 const wordExcluded = [
@@ -70,7 +81,7 @@ function getFreq(sentence){
  * getFreqPoint クエリに対して各単語の重みを算出し、質問と答えのセットからマッチ度を算出して、質問・答え・マッチ度を含む2次元配列で返します。
  * @param {string} sentence クエリ文です。
  * @param {[{question:string,response:string}]} answers 質問と答えの2次元配列です。
- * @returns {[string,string,number]} 質問・答え・マッチ度です。降順で並びます。
+ * @returns {[{question:string,response:string,weightPoint:number}]} 質問・答え・マッチ度です。降順で並びます。
  */
 function getFreqPoint(sentence,answers){
     const arrayWeight = getFreq(sentence);
@@ -79,13 +90,13 @@ function getFreqPoint(sentence,answers){
     // 答えの2次元配列からウェイトを計算
     answers.forEach((answer) => {
         let questionSegmented = getFreq(answer.question);
-        let weightPoint = 0;
         // 単語と度数の二次元配列でフィルタを掛ける
         for(let i = 0; i < arrayWeight[0].length; i++){
             for(let j = 0; j < questionSegmented.length; j++){
                 if(arrayWeight[0][i] == questionSegmented[0][j]){
                     let weightPoint = arrayWeight[1][i] * questionSegmented[1][j];
-                    arrayReturn.push([answer.question,answer.response,weightPoint]);
+                    answer["weightPoint"] = weightPoint;
+                    arrayReturn.push(answer);
                     break;
                 }
             }
@@ -94,10 +105,51 @@ function getFreqPoint(sentence,answers){
 
     // 降順ソート
     arrayReturn.sort((a,b) => {
-        if(a[2] > b[2]){
+        if(a.weightPoint > b.weightPoint){
             return -1;
         }
     })
 
     return arrayReturn;
+}
+
+/**
+ * searchAll 全文一致検索し、キーワードがすべて含まれるJSONの配列のみを返します。
+ * @param {string} sentence 全文一致検索で検索するキーワードです。
+ * @param {[{question:string,response:string,weightPoint:number}]} answers 質問と答えをセットしたJSONです。
+ * @returns {[{question:string,response:string,weightPoint:number}]} キーワードをすべて含んでいるJSONの配列です。
+ */
+function searchAll(sentence,answers){
+    const segmenter = new TinySegmenter();
+    const sentenceSegmented = segmenter.segment(sentence);
+    const sentenceSegmentedUnique = Array.from(new Set([...sentenceSegmented]));
+    const returnArray = [];
+
+    for(let i = 0; i < answers.length;i++){
+        let concordanceIndicator = true;
+        for(let j = 0; j < sentenceSegmentedUnique.length; j++){
+            // 1文字を除外
+            if(sentenceSegmentedUnique[j].length <= 1){
+                break;
+            }
+
+            // 除外語を除外
+            if(wordExcluded.filter((excl) => {
+                if(sentenceSegmentedUnique[j] == excl){
+                    return true;
+                }else{
+                    return false;
+                }}).length >= 1){
+                break;
+            }
+            let wordReg = new RegExp(sentenceSegmentedUnique[j],"gm");
+            if(!wordReg.test(answers[i].question)){
+                concordanceIndicator = false;
+            }
+        }
+        if(concordanceIndicator){
+            returnArray.push(answers[i]);
+        }
+    }
+    return returnArray;
 }
