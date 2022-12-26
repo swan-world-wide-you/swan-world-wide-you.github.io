@@ -69,7 +69,7 @@ function getFreq(sentence){
 /**
  * getFreqPoint クエリに対して各単語の重みを算出し、質問と答えのセットからマッチ度を算出して、質問・答え・マッチ度を含む2次元配列で返します。
  * @param {string} sentence クエリ文です。
- * @param {[[string,string]]} answers 質問と答えの2次元配列です。
+ * @param {[{question:string,response:string}]} answers 質問と答えの2次元配列です。
  * @returns {[string,string,number]} 質問・答え・マッチ度です。降順で並びます。
  */
 function getFreqPoint(sentence,answers){
@@ -78,31 +78,26 @@ function getFreqPoint(sentence,answers){
 
     // 答えの2次元配列からウェイトを計算
     answers.forEach((answer) => {
-        let questionSegmented = getFreq(answer[0]);
+        let questionSegmented = getFreq(answer.question);
+        let weightPoint = 0;
         // 単語と度数の二次元配列でフィルタを掛ける
-        arrayWeight.forEach((wordFreq) => {
-            const wordFiltered = questionSegmented.filter((word) => {
-                if(wordFreq[0] == word[0]){
-                    return true;
-                }else{
-                    return false;
+        for(let i = 0; i < arrayWeight[0].length; i++){
+            for(let j = 0; j < questionSegmented.length; j++){
+                if(arrayWeight[0][i] == questionSegmented[0][j]){
+                    let weightPoint = arrayWeight[1][i] * questionSegmented[1][j];
+                    arrayReturn.push([answer.question,answer.response,weightPoint]);
+                    break;
                 }
-            });
-            // 一致したときは長さが1となるので、あったときは度数とポイントを乗算
-            if(wordFiltered.length > 0){
-                const weightPoint = wordFreq[1] * wordFiltered[0][1];
-                arrayReturn.push([answer[0],answer[1],weightPoint]);
             }
-        })
+        }
     });
 
     // 降順ソート
     arrayReturn.sort((a,b) => {
-        if(a[2] < b[2]){
+        if(a[2] > b[2]){
             return -1;
         }
     })
 
     return arrayReturn;
 }
-
